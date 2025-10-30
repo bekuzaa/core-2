@@ -1,0 +1,86 @@
+# Docker Compose for datarhei Core with UI
+version: '3.8'
+
+services:
+  # datarhei Core Backend
+  datarhei-core:
+    image: datarhei/core:latest
+    container_name: datarhei-core
+    restart: unless-stopped
+    ports:
+      - "8080:8080"      # HTTP API
+      - "1935:1935"      # RTMP
+      - "6000:6000/udp"  # SRT
+    environment:
+      # API Authentication
+      - CORE_API_AUTH_USERNAME=admin
+      - CORE_API_AUTH_PASSWORD=admin123
+      - CORE_API_AUTH_ENABLE=true
+
+      # Logging
+      - CORE_LOG_LEVEL=info
+
+      # Storage
+      - CORE_STORAGE_DISK_DIR=/core/data
+      - CORE_STORAGE_DISK_SIZE=10240
+
+      # RTMP Server
+      - CORE_RTMP_ENABLE=true
+      - CORE_RTMP_ADDRESS=:1935
+      - CORE_RTMP_APP=live
+
+      # SRT Server
+      - CORE_SRT_ENABLE=true
+      - CORE_SRT_ADDRESS=:6000
+
+      # Sessions
+      - CORE_SESSIONS_ENABLE=true
+      - CORE_SESSIONS_PERSIST=true
+
+      # Metrics
+      - CORE_METRICS_ENABLE=true
+      - CORE_METRICS_ENABLE_PROMETHEUS=true
+    volumes:
+      - ./config:/core/config
+      - ./data:/core/data
+    networks:
+      - datarhei-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/v3"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # datarhei Core UI
+  datarhei-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: datarhei/core-ui:latest
+    container_name: datarhei-ui
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      datarhei-core:
+        condition: service_healthy
+    networks:
+      - datarhei-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  datarhei-network:
+    driver: bridge
+    name: datarhei-network
+
+volumes:
+  config:
+    driver: local
+  data:
+    driver: local

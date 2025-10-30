@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>datarhei Core API Connection Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0c4a6e 100%);
+            color: #f8fafc;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #0ea5e9, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .test-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .config-section {
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: #f8fafc;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        .button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(14, 165, 233, 0.3);
+        }
+
+        .button-secondary {
+            background: #334155;
+            color: #cbd5e1;
+        }
+
+        .button-secondary:hover {
+            background: #475569;
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .test-results {
+            margin-top: 30px;
+        }
+
+        .test-item {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .test-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+        }
+
+        .test-item.success::before {
+            background: #22c55e;
+        }
+
+        .test-item.error::before {
+            background: #ef4444;
+        }
+
+        .test-item.pending::before {
+            background: #f59e0b;
+        }
+
+        .test-item.loading::before {
+            background: linear-gradient(180deg, #0ea5e9, #a855f7);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .test-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .test-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .test-status {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .status-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .status-loading {
+            background: rgba(14, 165, 233, 0.2);
+            color: #0ea5e9;
+        }
+
+        .test-details {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .test-details pre {
+            background: #020617;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            border: 1px solid #1e293b;
+        }
+
+        .test-details code {
+            color: #0ea5e9;
+            font-family: 'Courier New', monospace;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(168, 85, 247, 0.1));
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #0ea5e9;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            color: #0ea5e9;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #f59e0b;
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .endpoint-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+
+        .endpoint-list li {
+            padding: 8px 12px;
+            background: #020617;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #1e293b;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0ea5e9, #a855f7);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 API Connection Test</h1>
+            <p>Test datarhei Core API connectivity and functionality</p>
+        </div>
+
+        <div class="test-card">
+            <div class="config-section">
+                <h2 style="margin-bottom: 20px;">Configuration</h2>
+
+                <div class="form-group">
+                    <label for="apiUrl">Core API URL</label>
+                    <input type="text" id="apiUrl" value="http://localhost:8080" placeholder="http://localhost:8080">
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" value="admin" placeholder="admin">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" value="admin123" placeholder="admin123">
+                </div>
+
+                <div>
+                    <button class="button button-primary" onclick="runAllTests()" id="testButton">
+                        Run All Tests
+                    </button>
+                    <button class="button button-secondary" onclick="clearResults()">
+                        Clear Results
+                    </button>
+                </div>
+
+                <div class="progress-bar" id="progressBar" style="display: none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const tests = [
+            {
+                name: 'Basic Connectivity',
+                description: 'Test if Core API is reachable',
+                endpoint: '/api/v3',
+                method: 'GET',
+                requireAuth: false
+            },
+            {
+                name: 'Authentication',
+                description: 'Test authentication with credentials',
+                endpoint: '/api/v3',
+                method: 'GET',
+                requireAuth: true
+            },
+            {
+                name: 'System Information',
+                description: 'Get system and version information',
+                endpoint: '/api/v3',
+                method: 'GET',
+                requireAuth: true
+            },
+            {
+                name: 'Configuration',
+                description: 'Retrieve system configuration',
+                endpoint: '/api/v3/config',
+                method: 'GET',
+                requireAuth: true
+            },
+            {
+                name: 'Process List',
+                description: 'Get list of FFmpeg processes',
+                endpoint: '/api/v3/process',
+                method: 'GET',
+                requireAuth: true
+            },
+            {
+                name: 'Skills/Capabilities',
+                description: 'Get FFmpeg capabilities',
+                endpoint: '/api/v3/skills',
+                method: 'GET',
+                requireAuth: true
+            },
+            {
+                name: 'Metrics',
+                description: 'Get system metrics',
+                endpoint: '/api/v3/metrics',
+                method: 'GET',
+                requireAuth: true
+            },
+            {
+                name: 'Sessions',
+                description: 'Get active viewer sessions',
+                endpoint: '/api/v3/session/active',
+                method: 'GET',
+                requireAuth: true
+            },
+            {
+                name: 'Filesystems',
+                description: 'List available filesystems',
+                endpoint: '/api/v3/fs',
+                method: 'GET',
+                requireAuth: true
+            },
+            {
+                name: 'CORS Headers',
+                description: 'Check CORS configuration',
+                endpoint: '/api/v3',
+                method: 'OPTIONS',
+                requireAuth: false
+            }
+        ];
+
+        let testResults = [];
+
+        function getAuthHeader() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            return 'Basic ' + btoa(username + ':' + password);
+        }
+
+        async function runTest(test) {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const url = apiUrl + test.endpoint;
+
+            const options = {
+                method: test.method,
+                headers: {}
+            };
+
+            if (test.requireAuth) {
+                options.headers['Authorization'] = getAuthHeader();
+            }
+
+            try {
+                const startTime = performance.now();
+                const response = await fetch(url, options);
+                const endTime = performance.now();
+                const responseTime = Math.round(endTime - startTime);
+
+                let data = null;
+                const contentType = response.headers.get('content-type');
+
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    data = await response.text();
+                }
+
+                return {
+                    success: response.ok,
+                    status: response.status,
+                    statusText: response.statusText,
+                    responseTime: responseTime,
+                    data: data,
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    error: error.message,
+                    responseTime: 0
+                };
+            }
+        }
+
+        function createTestElement(test, index) {
+            const div = document.createElement('div');
+            div.className = 'test-item pending';
+            div.id = `test-${index}`;
+            div.innerHTML = `
+                <div class="test-header">
+                    <div class="test-name">${test.name}</div>
+                    <div class="test-status status-pending">Pending</div>
+                </div>
+                <div class="test-details">
+                    <div>${test.description}</div>
+                    <div style="margin-top: 8px; font-family: monospace; font-size: 0.85rem;">
+                        ${test.method} ${test.endpoint}
+                    </div>
+                </div>
+            `;
+            return div;
+        }
+
+        function updateTestElement(index, result) {
+            const element = document.getElementById(`test-${index}`);
+            const test = tests[index];
+
+            const status = result.success ? 'success' : 'error';
+            const statusText = result.success ? 'Success' : 'Failed';
+
+            element.className = `test-item ${status}`;
+
+            let details = `
+                <div>${test.description}</div>
+                <div style="margin-top: 8px; font-family: monospace; font-size: 0.85rem;">
+                    ${test.method} ${test.endpoint}
+                </div>
+            `;
+
+            if (result.success) {
+                details += `
+                    <div style="margin-top: 10px;">
+                        <span style="color: #22c55e;">✓</span> Status: ${result.status} ${result.statusText}
+                        <br>
+                        <span style="color: #22c55e;">✓</span> Response Time: ${result.responseTime}ms
+                    </div>
+                `;
+
+                if (result.data && typeof result.data === 'object') {
+                    const dataKeys = Object.keys(result.data);
+                    if (dataKeys.length > 0) {
+                        details += `
+                            <div style="margin-top: 10px;">
+                                <strong>Response Keys:</strong> ${dataKeys.slice(0, 10).join(', ')}${dataKeys.length > 10 ? '...' : ''}
+                            </div>
+                        `;
+                    }
+                    details += `<pre>${JSON.stringify(result.data, null, 2).substring(0, 500)}${JSON.stringify(result.data).length > 500 ? '...' : ''}</pre>`;
+                }
+            } else {
+                details += `
+                    <div style="margin-top: 10px; color: #ef4444;">
+                        <span style="color: #ef4444;">✗</span> ${result.error || `Status: ${result.status} ${result.statusText}`}
+                    </div>
+                `;
+                if (result.data) {
+                    details += `<pre>${typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2)}</pre>`;
+                }
+            }
+
+            element.innerHTML = `
+                <div class="test-header">
+                    <div class="test-name">${test.name}</div>
+                    <div class="test-status status-${status}">${statusText}</div>
+                </div>
+                <div class="test-details">${details}</div>
+            `;
+        }
+
+        async function runAllTests() {
+            const resultsDiv = document.getElementById('results');
+            const testButton = document.getElementById('testButton');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+
+            // Disable button
+            testButton.disabled = true;
+            testButton.innerHTML = '<span class="spinner"></span> Running Tests...';
+
+            // Show progress bar
+            progressBar.style.display = 'block';
+            progressFill.style.width = '0%';
+
+            // Clear previous results
+            resultsDiv.innerHTML = '';
+            testResults = [];
+
+            // Create alert
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-info';
+            alert.innerHTML = '🔄 Running connectivity tests...';
+            resultsDiv.appendChild(alert);
+
+            // Create test card
+            const testCard = document.createElement('div');
+            testCard.className = 'test-card';
+            testCard.innerHTML = '<h2 style="margin-bottom: 20px;">Test Results</h2><div class="test-results" id="testList"></div>';
+            resultsDiv.appendChild(testCard);
+
+            const testList = document.getElementById('testList');
+
+            // Create test elements
+            tests.forEach((test, index) => {
+                testList.appendChild(createTestElement(test, index));
+            });
+
+            // Run tests sequentially
+            for (let i = 0; i < tests.length; i++) {
+                const testElement = document.getElementById(`test-${i}`);
+                testElement.className = 'test-item loading';
+                testElement.querySelector('.test-status').className = 'test-status status-loading';
+                testElement.querySelector('.test-status').textContent = 'Testing...';
+
+                const result = await runTest(tests[i]);
+                testResults.push(result);
+                updateTestElement(i, result);
+
+                // Update progress
+                const progress = ((i + 1) / tests.length) * 100;
+                progressFill.style.width = progress + '%';
+
+                // Small delay between tests
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
+            // Hide progress bar
+            setTimeout(() => {
+                progressBar.style.display = 'none';
+            }, 500);
+
+            // Show summary
+            showSummary();
+
+            // Re-enable button
+            testButton.disabled = false;
+            testButton.textContent = 'Run All Tests';
+        }
+
+        function showSummary() {
+            const resultsDiv = document.getElementById('results');
+
+            const passed = testResults.filter(r => r.success).length;
+            const failed = testResults.filter(r => !r.success).length;
+            const avgResponseTime = testResults.filter(r => r.responseTime).reduce((sum, r) => sum + r.responseTime, 0) / testResults.length;
+
+            const allPassed = failed === 0;
+            const alertClass = allPassed ? 'alert-success' : 'alert-error';
+            const alertIcon = allPassed ? '✅' : '⚠️';
+            const alertText = allPassed
+                ? 'All tests passed! API connection is working correctly.'
+                : `${failed} test(s) failed. Please check the configuration.`;
+
+            // Update alert
+            const alert = resultsDiv.querySelector('.alert');
+            alert.className = `alert ${alertClass}`;
+            alert.innerHTML = `${alertIcon} ${alertText}`;
+
+            // Add summary
+            const summaryCard = document.createElement('div');
+            summaryCard.className = 'test-card';
+            summaryCard.innerHTML = `
+                <h2 style="margin-bottom: 20px;">Summary</h2>
+                <div class="summary">
+                    <div class="summary-card">
+                        <div class="summary-value" style="color: #0ea5e9;">${tests.length}</div>
+                        <div class="summary-label">Total Tests</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value" style="color: #22c55e;">${passed}</div>
+                        <div class="summary-label">Passed</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value" style="color: #ef4444;">${failed}</div>
+                        <div class="summary-label">Failed</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-value" style="color: #a855f7;">${Math.round(avgResponseTime)}ms</div>
+                        <div class="summary-label">Avg Response Time</div>
+                    </div>
+                </div>
+
+                ${failed > 0 ? `
+                <div class="alert alert-warning" style="margin-top: 20px;">
+                    <strong>Common Issues:</strong>
+                    <ul class="endpoint-list">
+                        <li>❌ Core backend is not running → Start with: docker-compose up -d</li>
+                        <li>❌ Wrong URL → Check API URL (default: http://localhost:8080)</li>
+                        <li>❌ Wrong credentials → Username: admin, Password: admin123</li>
+                        <li>❌ CORS issue → Check nginx.conf or proxy configuration</li>
+                        <li>❌ Network issue → Check firewall or network connection</li>
+                    </ul>
+                </div>
+                ` : ''}
+            `;
+            resultsDiv.appendChild(summaryCard);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            testResults = [];
+        }
+
+        // Auto-run tests on page load (optional)
+        // window.addEventListener('load', () => {
+        //     setTimeout(runAllTests, 1000);
+        // });
+    </script>
+</body>
+</html>
